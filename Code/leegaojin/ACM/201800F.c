@@ -1,28 +1,23 @@
 /*************************************************************************
-	> File Name: 201800E.c
+	> File Name: 201800F.c
 	> Author: 
 	> Mail: 
-	> Created Time: 2018年07月05日 星期四 17时04分02秒
+	> Created Time: 2018年07月23日 星期一 11时16分58秒
  ************************************************************************/
 
 #include<stdio.h>
 int main()
 {
-    int n,num,a,sum;
-    scanf("%d",&n);
-    while(n--)
+    int n,a,sum=0;
+    while(scanf("%d",&n)!=EOF)
     {
-        scanf("%d",&num);
-                sum=0;
-        while(num--)
+        while(n--)
         {
             scanf("%d",&a);
-            sum+=a;
+            sum +=a;
         }
-        if(n!=0)
-        printf("%d\n\n",sum);
-        else
         printf("%d\n",sum);
+        sum =0;
     }
     return 0;
 }
