@@ -1,0 +1,208 @@
+C语言提供了几个标准库函数，可以将任意类型(整型、长整型、浮点型等)的数字转换为字符串。
+
+
+1.int/float to string/array:
+C语言提供了几个标准库函数，可以将任意类型(整型、长整型、浮点型等)的数字转换为字符串，下面列举了各函数的方法及其说明。
+● itoa()：将整型值转换为字符串。
+● ltoa()：将长整型值转换为字符串。
+● ultoa()：将无符号长整型值转换为字符串。
+● gcvt()：将浮点型数转换为字符串，取四舍五入。
+● ecvt()：将双精度浮点型值转换为字符串，转换结果中不包含十进制小数点。
+● fcvt()：指定位数为转换精度，其余同ecvt()。
+
+除此外，还可以使用sprintf系列函数把数字转换成字符串，其比itoa()系列函数运行速度慢
+
+2. string/array to int/float
+C/C++语言提供了几个标准库函数，可以将字符串转换为任意类型(整型、长整型、浮点型等)。
+● atof()：将字符串转换为双精度浮点型值。
+● atoi()：将字符串转换为整型值。
+● atol()：将字符串转换为长整型值。
+● strtod()：将字符串转换为双精度浮点型值，并报告不能被转换的所有剩余数字。
+● strtol()：将字符串转换为长整值，并报告不能被转换的所有剩余数字。
+● strtoul()：将字符串转换为无符号长整型值，并报告不能被转换的所有剩余数字。
+
+以下是用itoa()函数将整数转换为字符串的一个例子：
+# include <stdio.h>
+# include <stdlib.h>
+void main (void)
+{
+int num = 100;
+char str[25];
+itoa(num, str, 10);
+printf("The number 'num' is %d and the string 'str' is %s. \n" ,
+num, str);
+}
+
+itoa()函数有3个参数：第一个参数是要转换的数字，第二个参数是要写入转换结果的目标字符串，第三个参数是转移数字时所用 的基数。在上例中，转换基数为10。10：十进制；2：二进制...
+
+itoa并不是一个标准的C函数，它是Windows特有的，如果要写跨平台的程序，请用sprintf。是Windows平台下扩展的，标准库中有sprintf，功能比这个更强，用法跟printf类似：
+
+char str[255];
+sprintf(str, "%x", 100); //将100转为16进制表示的字符串。
+
+下列函数可以将整数转换为字符串：
+----------------------------------------------------------
+函数名 用
+----------------------------------------------------------
+itoa() 将整型值转换为字符串
+itoa() 将长整型值转换为字符串
+ultoa() 将无符号长整型值转换为字符串
+
+一、atoi()——把字符串转换成整型数
+考点：字符串转换为数字时，对相关ASCII码的理解。
+ 
+C实现：
+#include <ctype.h>
+#include <stdio.h>
+int atoi (char s[]);
+int main(void )
+{
+char s[100];
+gets(s);
+printf("integer=%d\n",atoi(s));
+return 0;
+}
+int atoi (char s[])
+{
+int i,n,sign;
+for(i=0;isspace(s[i]);i++)//跳过空白符;
+sign=(s[i]=='-')?-1:1;
+if(s[i]=='+'||s[i]==' -')//跳过符号
+  i++;
+for(n=0;isdigit(s[i]);i++)
+       n=10*n+(s[i]-'0');//将数字字符转换成整形数字
+return sign *n;
+}
+
+
+C++实现：
+1    #include <iostream>
+2    using namespace std;
+3  
+4    int str2int(const char *str)
+5    {
+6        int temp = 0;
+7        const char *ptr = str;  //ptr保存str字符串开头
+8  
+9        if (*str == '-' || *str == '+')  //如果第一个字符是正负号，
+10       {                      //则移到下一个字符
+11           str++;
+12       }
+13       while(*str != 0)
+14       {
+15           if ((*str < '0') || (*str > '9'))  //如果当前字符不是数字
+16           {                       //则退出循环
+17               break;
+18           }
+19           temp = temp * 10 + (*str - '0'); //如果当前字符是数字则计算数值
+20           str++;      //移到下一个字符
+21       }  
+22       if (*ptr == '-')     //如果字符串是以“-”开头，则转换成其相反数
+23       {
+24           temp = -temp;
+25       }
+26 
+27       return temp;
+28   }
+29 
+30   int main()
+31   {
+32       int n = 0;  
+33       char p[10] = "";
+34 
+35       cin.getline(p, 20);   //从终端获取一个字符串
+36       n = str2int(p);      //把字符串转换成整型数
+37      
+38       cout << n << endl;
+39 
+40       return 0;
+41   }
+
+二、itoa()——把一整数转换为字符串
+通过把整数的各位上的数字加“0”转换成char类型并存到字符数组中。但是要注意，需要采用字符串逆序的方法
+ 
+C语言实现：
+#include <ctype.h>
+#include <stdio.h>
+void      itoa (int n,char s[]);
+//atoi 函数：将ｓ转换为整形数
+int main(void )
+{
+int n;
+char s[100];
+printf("Input n:\n");
+scanf("%d",&n);
+printf("the string : \n");
+itoa (n,s);
+return 0;
+}
+void itoa (int n,char s[])
+{
+int i,j,sign;
+if((sign=n)<0)//记录符号
+n=-n;//使n成为正数
+i=0;
+do{
+       s[i++]=n%10+'0';//取下一个数字
+}
+while ((n/=10)>0);//删除该数字
+if(sign<0)
+s[i++]='-';
+s[i]='\0';
+for(j=i;j>=0;j--)//生成的数字是逆序的，所以要逆序输出
+       printf("%c",s[j]);
+}
+
+是int 转string类型的一个函数
+ 
+C++实现：
+1    #include <iostream>
+2    using namespace std;
+3   
+4    void int2str(int n, char *str)
+5    {
+6        char buf[10] = "";
+7        int i = 0;
+8        int len = 0;
+9        int temp = n < 0 ? -n: n;  // temp为n的绝对值
+10  
+11       if (str == NULL)
+12       {
+13           return;
+14       }
+15       while(temp)
+16       {
+17           buf[i++] = (temp % 10) + '0';  //把temp的每一位上的数存入buf
+18           temp = temp / 10;
+19       }
+20  
+21       len = n < 0 ? ++i: i;  //如果n是负数，则多需要一位来存储负号
+22       str[i] = 0;            //末尾是结束符0
+23       while(1)
+24       {
+25           i--;
+26           if (buf[len-i-1] ==0)
+27           {
+28               break;
+29           }
+30           str[i] = buf[len-i-1];  //把buf数组里的字符拷到字符串
+31       }
+32       if (i == 0 )
+33       {
+34           str[i] = '-';          //如果是负数，添加一个负号
+35       }
+36   }
+37  
+38   int main()
+39   {
+40       int nNum;
+41       char p[10];
+42  
+43       cout << "Please input an integer:";
+44       cin >> nNum;
+45       cout << "output: " ;
+46       int2str(nNum, p);        //整型转换成字符串
+47       cout<< p << endl;
+48  
+49       return 0;
+50   }
