@@ -50,12 +50,14 @@ int filecmp(const void *, const void *);
 int timecmp(const void *, const void *);
 int sizecmp(const void *, const void *);
 
+void get_fname_width(int ws_col, struct statf *statfp[], int fn);
+void get_other_width(struct statf *statfp[], int fn);
+
 void deal_argfile(int argc, char **argv);
 void show_dir(char *pathname, int fn);
 void show_single_dir(struct statf *statfp[], int fn);
 int get_fn(char *pathname);
-int get_width(int ws_col, struct statf *statfp[], int fn);
-void show_align(int ws_col, int width, struct statf *staf);
+void show_align(int ws_col, struct statf *staf);
 void show_attribute(struct statf *staf);
 void fsize_trans(off_t size);
 void err_exit(char *fmt, ...);

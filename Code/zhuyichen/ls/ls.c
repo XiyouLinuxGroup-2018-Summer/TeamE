@@ -1,6 +1,15 @@
 #include "ls.h"
 
 static int option = 0;       /*  设置标志位  */
+static int fname_width;      /*  文件名的输出宽度  */
+static int fsize_width;      /*  文件大小的输出宽度  */
+static int flink_width;      /*  文件链接数的输出宽度  */
+static int funame_width;     /*  文件用户名的输出宽度  */
+static int fgname_width;     /*  文件所属组名的输出宽度  */
+static int fuid_width;       /*  文件uid的输出宽度  */
+static int fgid_width;       /*  文件gid的输出宽度  */
+static int finode_width;     /*  文件inode的输出宽度  */
+
 /*
  * ls命令的简要实现，可用于处理[-ahilnRrSt]参数 
  */
@@ -149,15 +158,16 @@ void show_dir(char *pathname, int fn)
 void show_single_dir(struct statf *statfp[], int fn)
 {
     struct winsize  size;     /*  终端窗口的大小  */
-    int             width;    /*  输出宽度  */
     int             i;
 
     if (isatty(1)) {     /*  输出至终端  */
         if (ioctl(1, TIOCGWINSZ, &size) < 0)    /*  获取终端窗口的大小  */ 
             err_exit("%s", strerror(errno));
-        width = get_width(size.ws_col, statfp, fn);   /*  得到输出宽度  */
+        get_fname_width(size.ws_col, statfp, fn);   /*  得到输出宽度  */
     } else
-        width = 0;    /*  输出重定向到了一个文件  */
+        fname_width = 0;    /*  输出重定向到了一个文件  */
+
+    get_other_width(statfp, fn);
 
     cmp = ((option & FILE_SIZ) ? sizecmp : ((option & FILE_TIM) ? timecmp : filecmp));
     qsort(statfp, fn, sizeof(statfp[0]), cmp);     /*  根据可选参数对文件进行排序  */
@@ -166,22 +176,55 @@ void show_single_dir(struct statf *statfp[], int fn)
         if (option & FILE_LON)
             show_attribute(statfp[i]);
         else
-            show_align(size.ws_col, width, statfp[i]);
+            show_align(size.ws_col, statfp[i]);
     if (!(option & FILE_LON))
         putchar('\n');
 
 }
 
-/*  get_width函数：计算出用于show_align函数的输出宽度  */
-int get_width(int ws_col, struct statf *statfp[], int fn)
+/*  get_fname_width函数：计算出文件名的输出宽度  */
+void get_fname_width(int ws_col, struct statf *statfp[], int fn)
 {
-    int i;
-    int maxlen;    /*  最大文件名长度  */
+    fname_width = 0;
+    for (int i = 0; i < fn; i++)    /*  获取最大文件名的长度  */
+        if (strlen(statfp[i]->buf) > fname_width)
+            fname_width = strlen(statfp[i]->buf);
+}
 
-    for (maxlen = i = 0; i < fn; i++)    /*  获取最大文件名的长度  */
-        if (strlen(statfp[i]->buf) > maxlen)
-            maxlen = strlen(statfp[i]->buf);
-    return maxlen;
+/*  get_other_width函数：计算出除文件名以外的其他所需的输出宽度  */
+void get_other_width(struct statf *statfp[], int fn)
+{
+    char tmp[100];
+    struct passwd   *usr;
+    struct group    *grp;
+
+    fsize_width = funame_width = fgname_width = fuid_width = fgid_width = finode_width = 0;
+    for (int i = 0; i < fn; i++) {
+        sprintf(tmp, "%lld", statfp[i]->statbuf.st_size);
+        if (strlen(tmp) > fsize_width)
+            fsize_width = strlen(tmp);
+        sprintf(tmp, "%d", statfp[i]->statbuf.st_nlink);
+        if (strlen(tmp) > flink_width)
+            flink_width = strlen(tmp);
+        sprintf(tmp, "%u", statfp[i]->statbuf.st_uid);
+        if (strlen(tmp) > fuid_width)
+            fuid_width = strlen(tmp);
+        sprintf(tmp, "%u", statfp[i]->statbuf.st_gid);
+        if (strlen(tmp) > fgid_width)
+            fgid_width = strlen(tmp);
+        sprintf(tmp, "%llu", statfp[i]->statbuf.st_ino);
+        if (strlen(tmp) > finode_width)
+            finode_width = strlen(tmp);
+        if ((usr = getpwuid(statfp[i]->statbuf.st_uid)) == NULL)
+            err_exit("%s", strerror(errno));
+        if (strlen(usr->pw_name) > funame_width)
+            funame_width = strlen(usr->pw_name);
+        if ((grp = getgrgid(statfp[i]->statbuf.st_gid)) == NULL)
+            err_exit("%s", strerror(errno));
+        if (strlen(grp->gr_name) > fgname_width)
+            fgname_width = strlen(grp->gr_name);
+    }
+
 }
 
 /*
@@ -190,14 +233,14 @@ int get_width(int ws_col, struct statf *statfp[], int fn)
  */
 
 /*  show_align函数：将目录下的所有文件按列对齐输出  */
-void show_align(int ws_col, int width, struct statf *staf)
+void show_align(int ws_col, struct statf *staf)
 {
     static int row;
 
-    if (width) {
-        if ((row += width) > ws_col) {
+    if (fname_width) {
+        if ((row += fname_width) > ws_col) {
             putchar('\n');
-            row = width + 1;    /*  文件间以空格隔开  */
+            row = fname_width + 1;    /*  文件间以空格隔开  */
         } else
             row += 1;
     }
@@ -205,20 +248,20 @@ void show_align(int ws_col, int width, struct statf *staf)
     /* printf("%-*s ", width, staf->buf); */
     /*  根据不同文件类型显示不同颜色  */
     if (S_ISREG(staf->statbuf.st_mode))
-        printf(CYAN"%-*s "END, width, staf->buf);
+        printf(CYAN"%-*s "END, fname_width, staf->buf);
     else if (S_ISDIR(staf->statbuf.st_mode))
-        printf(MAGENTA"%-*s "END, width, staf->buf);
+        printf(MAGENTA"%-*s "END, fname_width, staf->buf);
     else if (S_ISLNK(staf->statbuf.st_mode))
-        printf(YELLOW"%-*s "END, width, staf->buf);
+        printf(YELLOW"%-*s "END, fname_width, staf->buf);
     else if (S_ISCHR(staf->statbuf.st_mode))
-        printf(RED"%-*s "END, width, staf->buf);
+        printf(RED"%-*s "END, fname_width, staf->buf);
     else if (S_ISBLK(staf->statbuf.st_mode))
-        printf(RED"%-*s "END, width, staf->buf);
+        printf(RED"%-*s "END, fname_width, staf->buf);
     else if (S_ISFIFO(staf->statbuf.st_mode))
-        printf(CYAN"%-*s "END, width, staf->buf);
+        printf(CYAN"%-*s "END, fname_width, staf->buf);
     else if (S_ISSOCK(staf->statbuf.st_mode))
-        printf(MAGENTA"%-*s "END, width, staf->buf);
-    if(!width)
+        printf(MAGENTA"%-*s "END, fname_width, staf->buf);
+    if(!fname_width)
         putchar('\n');
 }
 
@@ -231,7 +274,7 @@ void show_attribute(struct statf *staf)
 
     /*  打印文件的inode编号  */
     if (option & FILE_INO)
-        printf("%8llu ", staf->statbuf.st_ino);
+        printf("%*llu ", finode_width, staf->statbuf.st_ino);
 
     /*  打印文件的类型信息  */
     if (S_ISREG(staf->statbuf.st_mode))
@@ -261,26 +304,26 @@ void show_attribute(struct statf *staf)
     printf("%c", staf->statbuf.st_mode & S_IXOTH ? 'x' : '-');
 
     /*  打印文件的链接数  */
-    printf(" %4d ", staf->statbuf.st_nlink);
+    printf("  %*d ", flink_width, staf->statbuf.st_nlink);
 
     /*  打印文件的所有者和用户组  */
     if (option & FILE_NUM) {
-        printf("%6d ", staf->statbuf.st_uid);
-        printf("%6d ", staf->statbuf.st_gid);
+        printf("%*d ", fuid_width, staf->statbuf.st_uid);
+        printf("%*d ", fgid_width, staf->statbuf.st_gid);
     } else {
         if ((usr = getpwuid(staf->statbuf.st_uid)) == NULL)
             err_exit("%s", strerror(errno));
         if ((grp = getgrgid(staf->statbuf.st_gid)) == NULL)
             err_exit("%s", strerror(errno));
-        printf("%-10s ", usr->pw_name);
-        printf("%-10s ", grp->gr_name);
+        printf("%-*s  ", funame_width, usr->pw_name);
+        printf("%-*s  ", fgname_width, grp->gr_name);
     }
 
     /*  打印文件的大小  */
     if (option & FILE_UND)
         fsize_trans(staf->statbuf.st_size);
     else
-        printf("%8lld ", staf->statbuf.st_size);
+        printf("%*lld ", fsize_width, staf->statbuf.st_size);
 
     /*  打印文件的时间  */
     if ((timeptr = ctime(&staf->statbuf.st_mtime)) == NULL)
