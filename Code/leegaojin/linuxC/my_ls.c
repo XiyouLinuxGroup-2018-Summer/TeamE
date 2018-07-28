@@ -155,7 +155,7 @@ void display(int flag,char*pathname)
       j=0;
       continue;
     }
-    name[j++]==pathname[i];
+    name[j++]=pathname[i];
   }
   name[j]='\0';
   //用lstat而不是stat以方便解析链接文件
@@ -182,6 +182,7 @@ void display(int flag,char*pathname)
       display_attribute(buf,name);
       printf(" %-s\n",name);
       break;
+
     default:
       break;
     }
@@ -191,8 +192,10 @@ void display_dir(int flag_param,char *path)
 {
   DIR     *dir;
   struct dirent   *ptr;
-  int     count =0;
-  char    filenames[256][PATH_MAX+1],temp[PATH_MAX+1];
+  int     i,count =0;
+  char ** filenames;
+
+
 
   //获取该目录下文件总数和最长的文件名
   dir = opendir(path);
@@ -205,10 +208,12 @@ void display_dir(int flag_param,char *path)
         count++;
   }
   closedir(dir);
-  if(count>256)
-    my_err("too many files under this dir",__LINE__);
 
-    int i,j,len = strlen(path);
+    filenames=(char**)malloc(count*sizeof(char));
+    for(i=0;i<count;i++)
+    filenames[i]=(char*)malloc(g_maxlen*sizeof(char));
+
+    int j,len = strlen(path);
     //获取该文件下所有文件名
     dir = opendir(path);
     for(i = 0;i<count; i++){
@@ -242,7 +247,7 @@ closedir(dir);
 int main(int argc,char**argv)
 {
   int     i,j,k,num;
-  char    path[PATH_MAX+1];
+  char    path[1000+1];
   char    param[32];  //保存命令行参数
   char    flag_param=PARAM_NONE;
   struct  stat   buf;

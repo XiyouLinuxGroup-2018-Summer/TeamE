@@ -19,8 +19,13 @@
 
 
 #define  MAXROWLEN   80   //一行显示的最多字符数
+#define flag_N 0
+#define flag_A 1
+#define flag_L 2
+#define flag_R 4
 
-
+int    f_leave_len = MAXROWLEN;
+int    f_maxlen;
 
 
 void my_err(const char *err_string,int line)
@@ -122,65 +127,185 @@ void display_attribute(struct stat buf,char* name)
 }
 void display_single(char *name)
 {
+   int i,len;
 
-  printf("%-s\n",name);
+   if(f_leave_len<f_maxlen){
+     printf("\n");
+     f_leave_len = 80;
+   }
+
+   len = strlen(name);
+   len = f_maxlen-len;
+   printf("%-s",name);
+
+   for(i=0;i<=len;i++)
+   {
+      printf(" ");
+   }
+   f_leave_len-=(f_maxlen+2);
+
+}
+void display_file(int flag,char *name)
+{
+  struct stat buf;
+  DIR     *dir;
+  struct dirent     *ptr;
+
+
+  switch (flag) {
+    case flag_N:
+     if(name[0]!='.'){
+       display_single(name);
+     }
+        break;
+    case 1://-a
+       display_single(name);
+        break;
+    case 2://-l
+    if(name[0]!='.'){
+      display_attribute(buf,name);
+    }
+        break;
+    case 3://-al
+      display_attribute(buf,name);
+        break;
+    default:
+        break;
+  }
+
+}
+void display_dir(int flag,char*name)
+{
+    DIR * dir;
+    struct dirent  *ptr;
+    int     i,count = 0;
+    char ** filenames;
+    char name_dir[10000];
+    if(chdir(name)<0)
+    {
+      my_err("chdir",__LINE__);
+    }
+    if(getcwd(name_dir,512)<0){
+      my_err("getcwd",__LINE__);
+    }
+    printf("%s:\n",name_dir);
+
+    dir = opendir(name);
+    if(dir==NULL){
+      my_err("opendir",__LINE__);
+    }
+    while((ptr = readdir(dir))!=NULL){
+      if(f_maxlen<strlen(ptr->d_name))
+             f_maxlen = strlen(ptr->d_name);
+        count++;
+    }
+    closedir(dir);
+    //动态数组
+    filenames=(char**)malloc(count*sizeof(char));
+    for(i=0;i<count;i++)
+    filenames[i]=(char*)malloc(f_maxlen*sizeof(char));
+
+    int j,len=strlen(name);
+    dir = opendir(name);
+    for(i=0;i<count;i++){
+        ptr = readdir(dir);
+        if(ptr == NULL){
+          my_err("readdir",__LINE__);
+        }
+        strncpy(filenames[i],name,len);
+        filenames[i][len]='\0';
+        strcat(filenames[i],ptr->d_name);
+        filenames[i][len+strlen(ptr->d_name)] = '\0';
+    }
+    for(i=0;i<count;i++)
+       display_file(flag,filenames[i]);
+
+       closedir;
 
 
 }
+
 int main(int argc,char**argv)
 {
-    struct stat buf;
-    DIR     *dir;
-    struct dirent     *ptr;
-    int len,i,param=0;
-    if(argv[1][0]=='-')
+    int flag_param = flag_N;
+    int len,i,k,j=0;
+    char param[10];
+    char name[1000];
+    struct stat   buf;
+    int num=0;
+    for(i=0;i<argc;i++)
     {
-      len= strlen(argv[1]);
-      for(i=0;i<len;i++){
-        if(argv[1][i]=='a'){
-          param+=1;
-        }else if(argv[1][i]=='l'){
-          param+=2;
+      if(argv[i][0]=='-')
+        {
+          for(k=1;k<strlen(argv[i]);k++)
+          {
+            param[j]=argv[i][k];
+            j++;
+          }
+          num++;
         }
-      }
     }
 
-    if(chdir(argv[2])<0){
-      my_err("chdir",__LINE__);
-
-    }
-    //getcwd(buf,512);
-    //printf("%s\n",buf);
-    switch (param) {
-      case 1:if((dir = opendir(argv[2]))==NULL)  {
-        my_err("opendir",__LINE__);
-        exit(1);
+    //支持参数-a -l -R
+    for(i=0;i<j;i++)
+    {
+      if(param[i]=='a'){
+        flag_param |= flag_A;
+        continue;
       }
-      while((ptr = readdir(dir))!=NULL){
-              if(lstat(ptr->d_name,&buf)==-1){
-            my_err("stat",__LINE__);
-          }
-          display_single(ptr->d_name);
-          //display_attribute(buf,ptr->d_name);
-      };break;
-      case 2:if((dir = opendir(argv[2]))==NULL)  {
-        my_err("opendir",__LINE__);
-        exit(1);
+      else if(param[i]=='l'){
+        flag_param |= flag_L;
+        continue;
       }
-      while((ptr = readdir(dir))!=NULL){
-              if(lstat(ptr->d_name,&buf)==-1){
-            my_err("stat",__LINE__);
-          }
-          //display_single(ptr->d_name);
-          display_attribute(buf,ptr->d_name);
-      }break;
-      default:break;
+      else if(param[i]=='R'){
+        flag_param |= flag_R;
+        continue;
+      }else{
+      printf("my_ls:invalid option -%c\n",param[i]);
+      }
     }
+    param[j]='\0';
+
+if((num+1)==argc){
+  strcpy(name,"./");
+  name[2]='\0';
+  display_dir(flag_param,name);
+  //显示当前目录
+  return 0;
+}
+
+i=1;
+do{
+  if(argv[i][0]=='-'){
+    i++;
+    continue;
+  }else{
+    strcpy(name,argv[i]);
+
+    if(stat(name,&buf)==-1)
+     my_err("stat",__LINE__);
+
+    if(S_ISDIR(buf.st_mode) ){
+
+      if(name[strlen(argv[i])-1]!='/'){
+        name[strlen(argv[i])]!='/';
+        name[strlen(argv[i])+1]='\0';
+      }else{
+        name[strlen(argv[i])] = '\0';
+
+        display_dir(flag_param,name);
+        //读取目录 函数调用
+      }
+    }else{
+        display_file(flag_param,name);
+      //读取文件 函数调用
+    }
+  }
+
+}while(i<argc);
 
 
-
-
-
+  //  display(flag_param,argv[2]);
 
 
     return 0;
