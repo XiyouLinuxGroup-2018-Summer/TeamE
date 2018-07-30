@@ -164,7 +164,7 @@ void show_single_dir(struct statf *statfp[], int fn)
     if (isatty(1)) {     /*  输出至终端  */
         if (ioctl(1, TIOCGWINSZ, &size) < 0)    /*  获取终端窗口的大小  */ 
             err_exit("%s", strerror(errno));
-        get_fname_width(size.ws_col, statfp, fn);   /*  得到输出宽度  */
+        get_fname_width(size.ws_col, statfp, fn);    /*  获得文件名的输出宽度  */
     } else
         fname_width = 0;    /*  输出重定向到了一个文件  */
 
@@ -174,10 +174,12 @@ void show_single_dir(struct statf *statfp[], int fn)
     qsort(statfp, fn, sizeof(statfp[0]), cmp);     /*  根据可选参数对文件进行排序  */
 
     for (i = 0; i < fn; i++)     /*  打印文件列表  */
-        if ((option & FILE_LON) || (option & FILE_NUM))
+        if (option & (FILE_LON | FILE_NUM))
             show_attribute(statfp[i]);
         else
             show_align(size.ws_col, statfp[i]);
+    if (!(option & (FILE_LON | FILE_NUM)))
+        putchar('\n');
 }
 
 /*  get_fname_width函数：计算出文件名的输出宽度  */
@@ -268,9 +270,9 @@ void show_align(int ws_col, struct statf *staf)
         printf(CYAN"%-*s "END, fname_width, staf->buf);
     else if (S_ISSOCK(staf->statbuf.st_mode))
         printf(MAGENTA"%-*s "END, fname_width, staf->buf);
-    if(!fname_width)
+    if (!fname_width)
         putchar('\n');
-    /* printf("%-*s ", width, staf->buf); */
+    /* printf("%-*s ", fname_width, staf->buf); */
 }
 
 /*  show_attribute函数：打印文件的详细属性信息  */
