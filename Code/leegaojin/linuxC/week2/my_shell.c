@@ -194,9 +194,9 @@ void do_cmd(int argcount,char arglist[100][256])
     }
   }
 
-  if(how == have_pipe){//命令只含一个重定向符号<
+  if(how == in_redirect){//命令只含一个重定向符号<
     for(i=0;arg[i]!=NULL;i++){
-      if(strcmp(arg[i],"|")==0){
+      if(strcmp(arg[i],"<")==0){
         file = arg[i+1];
         arg[i] = NULL;
       }
