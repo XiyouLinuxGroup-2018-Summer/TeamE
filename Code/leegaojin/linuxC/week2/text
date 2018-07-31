@@ -1,0 +1,13 @@
+.
+..
+a.out
+diffork.c
+execve
+execve.c
+fork2.c
+fork3.c
+my_shell.c
+processimage
+processimage.c
+text
+vfork.c
