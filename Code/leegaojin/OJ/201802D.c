@@ -7,21 +7,21 @@
 
 #include<stdio.h>
 #include<math.h>
-double two(int n)
+long long two(int n)
 {
-  int num=1,num1=1;
+  long long num=1,num1=1;
   if(num%n==0)
   return num;
   while(1)
   {
     if((num*=10)%n==0)
     return num;
-    //printf("%d    ",num);
+    printf("%lld    ",num);
     if((num+=1)%n==0)
     return num;
     if((num1*=10)%n==0)
     return num1;
-    //printf("%d   %d\n",num,num1);
+    printf("%lld   %lld\n",num,num1);
   }
 }
 int main()
@@ -30,6 +30,6 @@ int main()
 
   while(scanf("%d",&n)!=EOF&&n!=0)
   {
-    printf("%d\n",two(n));
+    printf("%lld\n",two(n));
   }
 }
