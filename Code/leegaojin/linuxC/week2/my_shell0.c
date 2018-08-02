@@ -14,11 +14,16 @@
 #include<sys/wait.h>
 #include<sys/stat.h>
 #include<dirent.h>
+#include<pwd.h>
+#include<readline/readline.h>
+#include<readline/history.h>
+#include<signal.h>
 
 #define normal            0   //一般的命令
 #define out_redirect      1   //输出重定向
 #define in_redirect       2   //输入重定向
 #define have_pipe         3   //命令中有管道
+#define out_out_redirect  4
 
 void print_prompt();                          //打印提示符
 void get_input(char*);                        //得到输入的命令
@@ -26,25 +31,35 @@ void explain_input(char*,int *,char (*)[256]); //    //对输入的命令进行�
 void do_cmd(int,char (*)[256]); //                 //执行命令
 int find_command(char *);                    //查找命令中的可执行程序
 
+void my_err(const char* err_string,int line)
+{
+  fprintf(stderr,"line:%d ",line);
+  perror(err_string);
+  exit(1);
+}
 int main(int argc,char* argv[])
 {
+  signal(SIGINT,SIG_IGN);
+  signal(SIGTSTP,SIG_IGN);
   int i;
   int argcount = 0;
   char arglist[100][256];
   char **arg=NULL;
   char *buf = NULL;
-
-  buf = (char*)malloc(256);
-  if(buf==NULL){
-    perror("malloc failed");
-    exit(-1);
-  }
+  //buf = (char*)malloc(256);
+  //if(buf==NULL){
+  //  perror("malloc failed");
+  //  exit(-1);
+  //}
 
   while(1){
     //将buf所指的空间清零
-    memset(buf,0,256);
+    //memset(buf,0,256);
     print_prompt();
-    get_input(buf);
+    buf = readline(" ");
+    add_history(buf);
+    strcat(buf,"\n");
+    //get_input(buf);
     //若输入的命令为exit或logout则退出本程序
     if(strcmp(buf,"exit\n")==0||strcmp(buf,"logout\n")==0)
         break;
@@ -67,30 +82,52 @@ int main(int argc,char* argv[])
 
 void print_prompt()
 {
-  printf("myshell$$:");
+  char buf[512];
+  char * menu=NULL;
+
+//  char *p = readline("myshell:");
+//  add_history(p);
+
+  if(getcwd(buf,512)<0){
+    my_err("getcwd",__LINE__);
+  }
+   //获得主目录　用户名等
+  //printf("%s\n",buf);
+  printf("\033[1;35;40mlee@lee-PC:\033[0m");//更改输出格式字体颜色　（信号）（历史记录）
+  if((menu=strstr(buf,"/home/lee"))!=NULL){
+  printf("~");
+  printf("\033[1;36;40m%s\033[0m$",buf+9);
+}else{
+  printf("\033[1;36;40m%s\033[0m$",buf);
+  }
 }
 
 //获取用户输入
-void get_input(char*buf)
+/*void get_input(char*buf)
 {
   int len=0;
   int ch;
+  char*prompt[100];
+  char*input=NULL;
 
-  ch = getchar();
-  while (len<256&&ch!='\n'){
-    buf[len++]=ch;
-    ch = getchar();
-  }
-  if(len==256){
-    printf("command is too long\n");
-    exit(-1); //输入的命令过长则退出程序
-  }
+  //ch = getchar();
+  //while (len<256&&ch!='\n'){
+  //  buf[len++]=ch;
+  //  ch = getchar();
+  //}
+  //if(len==256){
+  //  printf("command is too long\n");
+  //  exit(-1); //输入的命令过长则退出程序
+  //}
 
-  buf[len] = '\n';
-  len++;
-  buf[len]='\0';
+  //buf[len] = '\n';
+  //len++;
+  //buf[len]='\0';
+  buf = readline(" ");
+  //add_history(buf);
+  strcat(buf,"\n");
 }
-
+*/
 //解析buf中的命令，将结果存入arglist中，命令以回车符号\n结束
 //如输入的命令为"ls -l /tmp",则arglist[0]、arglist[1]、arglist[2]分别为ls
 //-l 和　/tmp
@@ -118,7 +155,34 @@ void explain_input(char*buf,int *argcount,char arglist[100][256])
     }
   }
 }
+void my_cd (char*file)
+{
+  struct stat buf;
+  char name[512];
+//  chdir(file);
+//if(getcwd(name,512)<0){
+//    my_err("getcwd",__LINE__);
+  if(lstat(file,&buf)==-1)
+  {
+    perror("lstat");
+    return;
+  }
+  if(S_ISDIR(buf.st_mode))//判断是否为目录，不是则输出不是后退出
+  {
+     if(chdir(file)<0)
+     {
+       my_err("chdir",__LINE__);
+       return;
+     }
+  }else{
+    printf("%s:not a directory\n",file);
+    return;
+  }
+  //切换目录
+  //打印信息
 
+  //return;
+}
 void do_cmd(int argcount,char arglist[100][256])
 {
   int     flag=0;
@@ -130,6 +194,7 @@ void do_cmd(int argcount,char arglist[100][256])
   char*   arg[argcount+1];
   char*   argnext[argcount+1];
   char*   file;
+  char    lastenter[512];
   pid_t   pid;
   //将命令取出
   for(i=0;i<argcount;i++)
@@ -137,7 +202,17 @@ void do_cmd(int argcount,char arglist[100][256])
     arg[i]=(char*)arglist[i];
   }
   arg[argcount] = NULL;
-
+  //内置cd
+  if(argcount>0&&(strcmp(arg[0],"cd")==0))
+  {
+    //if(strchr(arg[1],'~')!=NULL)
+    //{
+    //  my_cd(strcat("/home/lee",arg[1]+1));
+    //  return;
+    //}
+    my_cd(arg[1]);
+    return;
+  }
   //查看命令行是否有后台运行符
   for(i=0;i<argcount;i++)
   {
@@ -159,6 +234,12 @@ void do_cmd(int argcount,char arglist[100][256])
     if(strcmp(arg[i],">")==0){
       flag++;
       how = out_redirect;
+      if((arg[i+1])==NULL)
+        flag++;
+    }
+    if(strcmp(arg[i],">>")==0){
+      flag++;
+      how = out_out_redirect;
       if((arg[i+1])==NULL)
         flag++;
     }
@@ -294,6 +375,18 @@ void do_cmd(int argcount,char arglist[100][256])
 
       if(remove("/tmp/youdonotknowfile"))
       printf("remove error\n");
+      exit(0);
+    }
+    break;
+    case 4:
+    if(pid==0){
+      if(!(find_command(arg[0]))){
+        printf("%s :command not found\n",arg[0]);
+        exit(0);
+      }
+      fd = open(file,O_RDWR|O_CREAT|O_APPEND,0644);
+      dup2(fd,1);
+      execvp(arg[0],arg);
       exit(0);
     }
     break;
