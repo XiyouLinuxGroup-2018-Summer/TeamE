@@ -1,0 +1,8 @@
+#£¡/bin/sh
+
+WHOAMI=`whoami`
+
+PID=`ps -u $WHOAMI | grep abc | awk '{print $1}'`
+if(test "$PID" == "")then
+	./abc
+fi

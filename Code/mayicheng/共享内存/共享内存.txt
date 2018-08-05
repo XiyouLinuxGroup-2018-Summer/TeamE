@@ -1,0 +1,10 @@
+int shmget(IPC_PRIVATE,size,mode);
+创建共享内存
+
+ipcs 	查相关资源的
+ipcs -m  查内存资源的
+
+void *shmat(int shmid,const void *shmaddr,int shm-flg);第二个参数总是设置为0
+第三个是权限
+
+shmdt		释放自己的空间

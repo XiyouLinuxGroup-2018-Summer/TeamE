@@ -1,0 +1,48 @@
+学linux不是学函数，是学这个机制
+
+TCP/IP与套接字
+只要协议相同，有网线，就可以通讯！
+与文件描述符一样，套接字需要使用套接字描述符。
+		--->>>  只要支持socket，就能通讯。
+
+socket也封装了其他协议。。。（主要是TCP和IP），只学tcp/ip，不学其他
+
+类似于OSI模型
+进程1->TCP的包（关心端口号，要保证端口收到）->IP的包（关心的只是目的IP地址，（就像写信）不关心收不收到）->以太网的包(物理的)
+----（intnet网）----->>>以太网的包->IP的包->TCP的包->进程2
+
+发一个包，对方收到任何消息收到之后，都会回一个ack（就是回一个确认），如果没收到ack，再发
+只有收到才停止（类似于回执）。
+
+udp	（qq）收不收到，不管（看视频就是udp）
+
+TCP的消耗大，UDP的消耗小
+
+
+TCP使用过程（三次握手）
+client端，主动连接方叫client。
+server端，被动接收方叫server。
+1.TCP先连接（三次握手）
+client > server:发送SYN（同步信号）a（a是一个编号）
+server > client:回复SYN            b，ack  a + 1（保证顺序）（服务端的编号）
+client > server:SYN ack b + 1
+
+2.连接通了，双方可以互相收发消息
+
+
+3.断开连接(四次挥手)
+client > server : FIN(同步消息),m
+server > client : ack m + 1
+server > client : FIN n
+client > server : server:ack n + 1
+
+udp不连，也不管收没收到
+
+
+涉及到的调用包括：socket，bind，listen，connect，accept，recv，send
+
+一个成语使用套接字需要执行四个步骤
+1.分配套接字接口和初始化
+2.连接
+3.发送或接收数据
+4.关闭套接字

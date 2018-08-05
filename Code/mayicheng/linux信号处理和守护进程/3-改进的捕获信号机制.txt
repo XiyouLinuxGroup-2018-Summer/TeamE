@@ -1,0 +1,1 @@
+int sigaction(int signo,const struct sigaction *act,struct stigaction *oldact);
