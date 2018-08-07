@@ -4,8 +4,7 @@ int a[100001];
 
 typedef struct
 {
-  int a;
-  int times;
+  ElemType data;
   struct QNode*next;
 }QNode,*QueuePrt;
 
@@ -20,13 +19,13 @@ void insertqueue(Linkqueue*q,ElemType e)  //入队
   p=(QueuePrt)malloc(sizeof(QNode));
   if(p==NULL)
    exit(0);
-   p->a = e;
+   p->data= e;
    p->next =NULL;
    q->reat->next=p;
    q->rear = p;
 }
 
-void DeletQueue(LinkQueue*q,ElemType *e)
+void OutQueue(LinkQueue*q,ElemType *e)
 {
   QueuePrt p;
   if(q->front == q->rear)
@@ -56,21 +55,10 @@ void InitQueue(LinkQueue*q)
   q->front->next = NULL;
 }
 
-void inter_Q(int a)
-{
-    if(a+1)
-}
-
-
-
 
 int main()
 {
   LinkQueue q;
-  int a,b;
-  while(scanf("%d %d",&a,&b)!=EOF)
-  {
-     InitQueue(&q);
-     inter_Q(a);
-  }
+
+
 }
