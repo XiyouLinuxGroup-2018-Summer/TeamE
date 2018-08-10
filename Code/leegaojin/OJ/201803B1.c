@@ -3,7 +3,7 @@
 int dp[32800];
 int main()
 {
-    int i,j,n;
+    int n,i,j;
     memset(dp,0,sizeof(dp));
     dp[0]=1;
     for(i=1;i<=3;i++)
@@ -15,7 +15,7 @@ int main()
      }
      while(scanf("%d",&n)==1)
      {
-       printf("%d\n",dp[n]);
+          printf("%d\n",dp[n]);
      }
      return 0;
 }

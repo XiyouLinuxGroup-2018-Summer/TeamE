@@ -30,6 +30,10 @@ int main(void)
     printf("open FIFO %s error: %s",FIFO_WRITE,strerror(errno));
     exit(1);
   }
+  while((rfd=open(FIFO_READ,O_RDONLY))==-1)
+  {
+    sleep(1);
+  }
 
   while(1)
   {
