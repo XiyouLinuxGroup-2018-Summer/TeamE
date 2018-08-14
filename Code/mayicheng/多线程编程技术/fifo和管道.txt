@@ -1,0 +1,5 @@
+守护：
+8古文：	fork   setsid   chdir("/")       umask(0)    close() ---
+循环读取管道内容，直到管道关闭
+
+ 

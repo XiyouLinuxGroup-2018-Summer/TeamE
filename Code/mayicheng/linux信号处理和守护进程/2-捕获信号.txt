@@ -1,0 +1,16 @@
+int pause(void);
+
+pause函数挂起调用他的程序，直到有消息送达
+
+每个进程能够决定除了SIGSTOP和SIGKILL之外的其他所有信号
+
+当一个进程调用fork的时候，其子进程继承父进程的信号处理方式，
+所以信号捕捉函数的地址在子进程中是有意义的。
+
+指向函数的指针
+
+signal函数
+void (*signal(int signal,void (*func)(int));
+
+只要有信号来。任何正执行的都得返回
+
