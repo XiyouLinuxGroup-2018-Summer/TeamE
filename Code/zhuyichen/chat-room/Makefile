@@ -1,6 +1,6 @@
-objs = server.o client.o sockio.o login.o mysql.o error.o
-serv_objs = server.o sockio.o login.o mysql.o error.o
-cli_objs = client.o sockio.o error.o
+objs = server.o client.o chat.o sockio.o wrap.o mysql.o error.o
+serv_objs = server.o chat.o sockio.o wrap.o mysql.o error.o
+cli_objs = client.o sockio.o wrap.o error.o
 
 all : sof cof
 .PHONY : all
@@ -13,10 +13,10 @@ sof : $(serv_objs)
 cof : $(cli_objs)
 	cc -o cof $(cli_objs)
 
-# 编译生成所有目标文件
 all : $(objs)
 .PHONY : all
 
+# 编译生成所有目标文件
 $(objs) : %.o : %.c
 	cc -c $< -o $@
 
