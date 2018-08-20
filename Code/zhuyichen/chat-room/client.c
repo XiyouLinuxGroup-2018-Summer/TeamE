@@ -1,5 +1,7 @@
 #include "chr.h"
 
+static int serv_type;   /*  用户当前所使用的服务类型  */
+
 int main(int argc, char **argv)
 {
     int                 connfd, n;
