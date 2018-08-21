@@ -41,19 +41,19 @@ int main(void)
                 clilen = sizeof(cliaddr);
                 connfd = Accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
 
+                /*  将connfd加入监听队列  */
                 EV_SET(&kev[0], connfd, EVFILT_READ | EVFILT_WRITE, EV_ADD, 0, 0, NULL);
                 Kevent(kq, kev, 1, NULL, 0, NULL);
 
-                strcpy(buf, "Please select login or register\n1.login\n2.register\n");
-                Writen(connfd, buf, strlen(buf));
+                help(connfd);
             } else {    /*  接受用户消息  */
                 sockfd = events[i].ident;
-                if (Readn(sockfd, buf, sizeof(buf)) == 0) {
+                if (Readn(sockfd, buf, sizeof(buf)) == 0) {    /*  用户下线  */
                     logout(sockfd);
                     events[i].flags |= EV_DELETE;
                     close(sockfd);
                 } else
-                    process_msg(buf, sockfd);
+                    process_msg(buf, sockfd);    /*  处理用户请求  */
             }
     }
     mysql_close(con);
@@ -62,19 +62,34 @@ int main(void)
 
 void process_msg(char *buf, int sockfd)
 {
-    int serv_type;
+    int     serv_type;
+    char    sql[BUFSIZ];
 
-    switch ((serv_type = get_serv_type(buf, sockfd))) {
+    /*  无服务状态  */
+    if (!(serv_type = get_serv_type(buf, sockfd))) {    
+        if (strcmp(buf, "\\h") == 0)
+            help(sockfd);
+        else if (strcmp(buf, "\\c") == 0)
+            clean(sockfd);
+    } else if (strcmp(buf, "\\q") == 0) {  /*  处于服务状态时，退出某个服务  */
+        sprintf(sql, "update userinfo set serv_type=0, chat_id=0, chat_fd=0 "
+            "where socket=%d;", sockfd);    
+        Mysql_query(con, sql);
+        return;
+    }
+
+    /*  处理服务请求  */
+    switch (serv_type) {
     case LOGIN: 
         check_login(buf, sockfd); break;
     case REGISTER:
         check_register(buf, sockfd); break;
     case CHPASSWD: 
-        break;
+        change_passwd(buf, sockfd); break; 
     case ADDFRIEND: 
         add_friend(buf, sockfd, serv_type); break;
     case DELFRIEND:
-        del_friend(buf, sockfd, serv_type); break;
+        del_friend(buf, sockfd); break;
     case PRVC:
         private_chat(buf, sockfd, serv_type); break;
     case GRPC:
@@ -83,11 +98,12 @@ void process_msg(char *buf, int sockfd)
         break;
     case SHIELD:
         break;
-    case ADDGRP:
-        break;
+    case ADDGRP: 
+        add_group(buf, sockfd); break;
     case CRTGRP:
-        break;
+        creat_group(buf, sockfd); break;
     case LEAVEGRP:
+        leave_group(buf, sockfd); break;
         break;
     case SETADMINIS:
         break;
