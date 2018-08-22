@@ -1,23 +1,19 @@
 #include "chr.h"
 
-static int serv_type;   /*  用户当前所使用的服务类型  */
-
-int main(int argc, char **argv)
+int main(void)
 {
     int                 connfd, n;
     struct sockaddr_in  cliaddr;
     fd_set              fdset, tmpset;
-    char                buf[BUFSIZ];
+    static char         buf[BUFSIZ];
 
     cliaddr.sin_port = htons(SERVPORT);
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    if ((connfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        err_sys("socket error");
+    connfd = Socket(AF_INET, SOCK_STREAM, 0);
 
-    if (connect(connfd, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0)
-        err_sys("connect error");
+    Connect(connfd, (struct sockaddr *)&cliaddr, sizeof(cliaddr));
 
     FD_ZERO(&fdset);
     FD_SET(0, &fdset);
@@ -26,23 +22,26 @@ int main(int argc, char **argv)
     while (1) {
         tmpset = fdset;
 
-        if (select(connfd + 1, &tmpset, NULL, NULL, NULL) < 0)
-            err_sys("select error");
+        /*  监听用户输入和服务端  */
+        Select(connfd + 1, &tmpset, NULL, NULL, NULL);
 
         if (FD_ISSET(0, &tmpset)) {
-            bzero(buf, sizeof(buf));
-            if (fgets(buf, sizeof(buf), stdin) == NULL && ferror(stdin))
-                err_sys("fgets error");
-            
-            Writen(connfd, buf, strlen(buf));
+            Fgets(buf, sizeof(buf), stdin);
+            n = strlen(buf);
+            if (buf[n - 1] == '\n')   /*  删除行末换行符  */
+                buf[n - 1] = '\0';
+            else
+                n++;    /*  包含末尾'\0'字符  */
+            Writen(connfd, buf, n);
         }
 
         if (FD_ISSET(connfd, &tmpset)) {
             if ((n = Readn(connfd, buf, sizeof(buf))) == 0) {
+                logout(connfd);
                 err_msg("server exit");                
                 break;
             } else
-                Writen(1, buf, n);
+                Writen(1, buf, n);   /*  写到标准输出  */
         }
     }
     exit(0);
