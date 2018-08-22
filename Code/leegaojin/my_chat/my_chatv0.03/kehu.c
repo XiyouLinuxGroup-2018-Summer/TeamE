@@ -36,8 +36,8 @@ void meun_per(void)
   puts(">我的群");
   puts(" ");
   puts("1.添加好友 2.删除好友")
-
 }
+
 /****************************************/
 /*****************登录注册界面**************/
 void meun_rll(void)
@@ -132,9 +132,9 @@ void * show_client(void*arg)
       break;
       case LOG_FAU:
       printf("账号或密码不存在，请重新输入!\n");
-      break;
+      continue;
       case QUIT :
-      printf("我在退出\n");
+      //printf("我在退出\n");
       pthread_exit(0);
       default:
       printf("errno!\n");

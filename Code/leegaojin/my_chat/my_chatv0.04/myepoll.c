@@ -326,7 +326,7 @@ int main()
 
               case ADD_FRI_SCU: //添加好友成功
               //简化版
-              printf("%s 同意了 %d 的好友请求!\n",masg.recv_mem,masg.send_mem);
+              printf("%s 同意了 %s 的好友请求!\n",masg.recv_mem,masg.send_mem); 
               //数据库添加
               break;
 

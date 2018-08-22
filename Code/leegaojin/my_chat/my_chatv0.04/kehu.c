@@ -52,21 +52,23 @@ void meun_per(void)
 }
 /****************************************/
 /**********加好友******/
-void add_fri (int socket)
+void add_fri (MASG*masg,int socket)
 {
-  MASG masg;
+  printf("send_mem=%s\n",masg->send_mem);
+  printf("flag = %d\n",masg->flag);
      printf("请输入你想要添加的好友（名字）：");
-     scanf("%s",masg.recv_mem);
-     printf("请输入备注信息（名字）:");
-     scanf("%s",masg.send_mem);
-     masg.flag = ADD_FRI;
-     send(socket,&masg,sizeof(MASG),0);
+     scanf("%s",masg->recv_mem);
+     //printf("请输入备注信息（名字）:");
+     //scanf("%s",masg->send_mem);
+     masg->flag = ADD_FRI;
+     printf("after flag = %d\n",masg->flag);
+     send(socket,masg,sizeof(MASG),0);
 }
 
 
 
 /***********个人界面*******************/
-void per(int socket)
+void per(MASG*masg,int socket)
 {
   while(1){
    meun_per();
@@ -75,7 +77,7 @@ void per(int socket)
    switch(flag+4)
    {
      case ADD_FRI:
-     add_fri(socket);
+     add_fri(masg,socket);
      break;
      case 7 :
      quit(socket,3);
@@ -122,7 +124,7 @@ int login(int socket,int flag)
     //发包
     //传回信息，是否成功 //交给主接收函数;
   printf("******************log_end\n");
-  per(socket);    //进入个人界面
+  per(&masg,socket);    //进入个人界面
 }
 int reg(int socket,int flag)
 {
