@@ -62,24 +62,35 @@ int main(void)
 
 void process_msg(char *buf, int sockfd)
 {
-    int     serv_type;
+    int     type;
     char    sql[BUFSIZ];
 
     /*  无服务状态  */
-    if (!(serv_type = get_serv_type(buf, sockfd))) {    
+    if (!(type = get_serv_type(buf, sockfd))) {    
         if (strcmp(buf, "\\h") == 0)
             help(sockfd);
         else if (strcmp(buf, "\\c") == 0)
             clean(sockfd);
+        else if (strcmp(buf, "\\f") == 0)
+            show_frilist(sockfd);
     } else if (strcmp(buf, "\\q") == 0) {  /*  处于服务状态时，退出某个服务  */
+        /* sprintf(sql, "select * from usertmp where socket=%d;", sockfd);
+        Mysql_query(con, sql);
+        res = Mysql_store_result(con);
+        if (mysql_num_rows(res)) {
+            ;
+        } */
+        sprintf(sql, "delete from usertmp where socket=%d;", sockfd);
+        mysql_query(con, sql);
         sprintf(sql, "update userinfo set serv_type=0, chat_id=0, chat_fd=0 "
             "where socket=%d;", sockfd);    
         Mysql_query(con, sql);
+        /* serv_type = 0; */
         return;
     }
 
     /*  处理服务请求  */
-    switch (serv_type) {
+    switch (type) {
     case LOGIN: 
         check_login(buf, sockfd); break;
     case REGISTER:
@@ -87,15 +98,13 @@ void process_msg(char *buf, int sockfd)
     case CHPASSWD: 
         change_passwd(buf, sockfd); break; 
     case ADDFRIEND: 
-        add_friend(buf, sockfd, serv_type); break;
+        add_friend(buf, sockfd, type); break;
     case DELFRIEND:
         del_friend(buf, sockfd); break;
     case PRVC:
-        private_chat(buf, sockfd, serv_type); break;
+        private_chat(buf, sockfd, type); break;
     case GRPC:
-        break;
-    case VIEW:
-        break;
+        group_chat(buf, sockfd, type); break;
     case SHIELD:
         break;
     case ADDGRP: 
@@ -104,7 +113,8 @@ void process_msg(char *buf, int sockfd)
         creat_group(buf, sockfd); break;
     case LEAVEGRP:
         leave_group(buf, sockfd); break;
-        break;
+    case SENDFILE: 
+        send_file(buf, sockfd, type); break;
     case SETADMINIS:
         break;
     case KICK:

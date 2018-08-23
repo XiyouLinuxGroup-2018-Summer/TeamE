@@ -1,11 +1,12 @@
 #include "chr.h"
 
+
 int main(void)
 {
     int                 connfd, n;
     struct sockaddr_in  cliaddr;
     fd_set              fdset, tmpset;
-    static char         buf[BUFSIZ];
+    char                buf[BUFSIZ];
 
     cliaddr.sin_port = htons(SERVPORT);
     cliaddr.sin_family = AF_INET;
@@ -32,15 +33,20 @@ int main(void)
                 buf[n - 1] = '\0';
             else
                 n++;    /*  包含末尾'\0'字符  */
-            Writen(connfd, buf, n);
+            if (*buf)
+                Writen(connfd, buf, n);
         }
 
         if (FD_ISSET(connfd, &tmpset)) {
-            if ((n = Readn(connfd, buf, sizeof(buf))) == 0) {
-                logout(connfd);
+            if ((n = Readn(connfd, buf, sizeof(buf))) == 0) {    /*  服务端退出  */
                 err_msg("server exit");                
                 break;
-            } else
+            }
+            if (strncmp(buf, "ys\r", 3) == 0)   /*  发送文件  */
+                sendf(buf, connfd);
+            else if (strncmp(buf, "yr\r", 3) == 0)   /*  接收文件  */
+                recvf(buf, connfd);
+            else
                 Writen(1, buf, n);   /*  写到标准输出  */
         }
     }

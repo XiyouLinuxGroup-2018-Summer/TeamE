@@ -55,7 +55,7 @@ void process_msg(char *buf, int sockfd);
 void check_login(char *buf, int sockfd);
 void check_register(char *buf, int sockfd);
 void add_friend(char *name, int sockfd, int serv_type);
-void del_friend(char *name, int sockfd, int serv_type);
+void del_friend(char *name, int sockfd);
 void private_chat(char *msg, int sockfd, int serv_type);
 
 void err_sys(const char *fmt, ...);
