@@ -45,6 +45,7 @@
 #define DIS_ON_MES  10020 //查看未读群通知 //群聊界面
 #define A_GRO_MESS 10021 //保存为普通群消息
 #define OFF_GRO_MESS 10022 //保存为未读群消息
+#define DIS_GRO_MEM  10023 //显示群成员
 
 #define SERV_PORT 8848 //服务器端口
 #define LISTENQ 12	 //链接请求队列的最大长度
@@ -88,6 +89,31 @@ int select_c(char *name, MYSQL *mysql)
 		printf("获取在线套接字失败，%s不在线\n", name);
 		return 0;
 	}
+}
+/***********显示群成员********/
+void dis_group_member(MYSQL*mysql,MASG*masg,int socket)
+{
+	MYSQL_RES *res = mysql_store_result(mysql);
+	MYSQL_ROW row;
+	char *sql = NULL;
+	int socket_send = 0;
+	sql = (char *)calloc(1024, sizeof(char));
+
+	sprintf(sql, "SELECT * FROM group_list where group_name ='%s'", masg->group);
+	if (0 != mysql_real_query(mysql, sql, strlen(sql)))
+	{
+		printf("query: %s\n", mysql_error(mysql));
+	}
+	res = mysql_store_result(mysql);
+
+	while ((row = mysql_fetch_row(res)))
+	{
+		printf("显示群成员\n");
+		printf("%s %s %s\n", row[0], row[1], row[2]);
+		strcpy(masg->data,row[2]);
+		send(socket,masg,sizeof(MASG),0);
+	}
+
 }
 /***********群聊*************/
 void chat_group (MYSQL*mysql,MASG*masg,int socket)
@@ -150,7 +176,7 @@ void invite_to_group(MYSQL*mysql,MASG*masg,int socket)
 	else if (!socket_send)
 	{
 		//保存为离线群通知
-		sprintf(sql, "INSERT INTO group_message (send,recv,qun,message,status) VALUES('%s','%s','%s',3)", masg->send_mem, masg->recv_mem, masg->data);
+		sprintf(sql, "INSERT INTO group_message (send,recv,qun,message,status) VALUES('%s','%s','%s','tips',3)", masg->send_mem, masg->recv_mem, masg->group);
 		if (0 != mysql_real_query(mysql, sql, strlen(sql)))
 		{
 			printf("query: %s\n", mysql_error(mysql));
@@ -798,6 +824,10 @@ int main()
 					}
 					printf("消息已加入群未读列表!\n");
 					break;
+				case DIS_GRO_MEM://显示群成员
+					dis_group_member(&mysql,&masg,socket_c);
+					break;
+				   
 				} //switch }
 			}	 //事件 }
 			//  printf("轮寻.......\n");

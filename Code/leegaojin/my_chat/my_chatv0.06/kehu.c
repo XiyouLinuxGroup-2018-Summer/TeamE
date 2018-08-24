@@ -44,6 +44,7 @@
 #define DIS_ON_MES  10020 //查看未读群通知 //群聊界面
 #define A_GRO_MESS 10021 //保存为普通群消息
 #define OFF_GRO_MESS 10022 //保存为未读群消息
+#define DIS_GRO_MEM  10023 //显示群成员
 int room_status = 0;
 
 #define PORT 8848
@@ -89,9 +90,11 @@ void chat_group(MASG*masg,int socket)
 
 	printf("+---h to history----群聊：%s-----------q to quit-+\n", masg->group);
 	puts("+-'*'邀请进群-+");
+	masg->flag = DIS_GRO_MEM;   //显示群成员
+	send(socket,masg,sizeof(MASG),0);  
 	//masg->flag = DIS_MES_OFF;    //读取未读消息
 	//send(socket,masg,sizeof(MASG),0);
-	//masg->flag = CHAT_GRO;
+	masg->flag = CHAT_GRO;
 	room_status = 1;
 	while (1)
 	{
@@ -318,9 +321,8 @@ void *show_client(void *arg)
 	{
 		recv(socket_c, &masg, sizeof(MASG), 0);
 		//  printf(".%s\n",masg.data);
-		//  printf("return number = %d\n",masg.flag);
+		 //printf("return number = %d\n",masg.flag);
 		int flag = masg.flag;
-
 		switch (flag)
 		{
 		case REG_SUC:
@@ -421,6 +423,9 @@ void *show_client(void *arg)
 				masg.flag = OFF_GRO_MESS;
 				send(socket_c, &masg, sizeof(MASG), 0);
 			}
+			break;
+		case DIS_GRO_MEM:
+			printf("|%s|\n",masg.data);
 			break;
 		default:
 			printf("errno!\n");
