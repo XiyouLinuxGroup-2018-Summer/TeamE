@@ -82,19 +82,20 @@ void quit(MASG *masg, int socket, int flag)
 /***************个人界面******************/
 void meun_per(void)
 {
-	puts(">>>>>>>>>>>>>>>个人主页<<<<<<<<<<<<<<<<<<<<<<");
-	puts(">我的好友                           >9.注销登录");
-	puts("----------------------------------------------");
-	puts("| >1.添加好友     >2.删除好友                    ");
-	puts("| >0.私聊        >3.显示(刷新)好友列表            ");
-	puts("----------------------------------------------");
+	//system("clear");
+	puts("\t>>>>个人主页<<<<<<");
+	puts(">我的好友\t\t>9.注销登录");
+	//puts("----------------------------------------------");
+	puts("| >1.添加好友\t>2.删除好友\t\t|");
+	puts("| >0.私聊>\t3.显示(刷新)好友列表\t|");
+	//puts("----------------------------------------------");
 	puts(">我的群");
-	puts("----------------------------------------------");
-	puts("| >4.创建群    >5.显示(刷新)群列表     ");
-	puts("| >6.进入群聊     >7. 退出群聊                      ");
-	puts("----------------------------------------------");
+	//puts("----------------------------------------------");
+	puts("| >4.创建群\t>5.显示(刷新)群列表\t|");
+	puts("| >6.进入群聊\t>7. 退出群聊\t\t|");
+	//puts("----------------------------------------------");
 	puts("|>>>8.发送文件");
-	puts("----------------------------------------------");
+	//puts("--------------------------------------------");
 	puts("|tips---：");
 }
 /***********收文件***************/
@@ -111,7 +112,7 @@ void recv_file(MASG*masg,int socket)
 	}
 	//printf("%s\n",masg->data);
 	int count =write(fd,masg->data,masg->lenth);
-	printf("count_write = %d\n masglenth = %d\n",count,masg->lenth);
+	//printf("count_write = %d\n masglenth = %d\n",count,masg->lenth);
 	close(fd);
 }
 /*************发文件****************/
@@ -120,6 +121,7 @@ void send_file(MASG*masg,int socket)
 	int fd = 0;
 	char pathname[20] = {0};
 	char send_buf[1024] = {0};
+	system("clear");
 	printf("发送文件给?:");
 	scanf("%s",masg->recv_mem);
 	getchar();
@@ -147,7 +149,7 @@ void send_file(MASG*masg,int socket)
 	//printf("after count %d\nmasglenth  = %d\n",count,masg->lenth);
 	memcpy(masg->data,send_buf,count);
 	//printf("%s\n",masg->data);
-	printf("after count %d\nmasglenth  = %d\n",count,masg->lenth);
+	//printf("after count %d\nmasglenth  = %d\n",count,masg->lenth);
 	send(socket,masg,sizeof(MASG),0);
 	}
 	close(fd);
@@ -169,6 +171,7 @@ void chat_group(MASG *masg, int socket)
 	scanf("%s", masg->group);
 	getchar();
 	masg->flag = CHAT_GRO;
+	system("clear");
 
 	printf("+---h to history----群聊：%s-----------q to quit-+\n", masg->group);
 	puts(">群成员:                             +-'*'邀请进群-+");
@@ -233,6 +236,7 @@ void chat_only(MASG *masg, int socket)
 	scanf("%s", masg->recv_mem);
 	masg->flag = CHAT_O;
 
+	system("clear");
 	printf("+---h to history----正在与%s聊天-----------q to quit-+\n", masg->recv_mem);
 	strcpy(client_name,masg->recv_mem);
 	masg->flag = DIS_MES_OFF;
@@ -295,12 +299,13 @@ void add_fri(MASG *masg, int socket)
 /*****************登录注册界面**************/
 void meun_rll(void)
 {
-	puts("          welcome  to  my_chat              ");
-	puts("--------------------------------------------");
-	puts("|         1.注册      2.登录               |");
-	puts("|         3.退出                           |");
-	puts("--------------------------------------------");
-	puts("                            my_chat v1.0  ");
+	system("clear");
+	puts("\t\twelcome");
+	puts("\t+------------------------------+");
+	puts("\t|\t1.注册\t2.登录\t\t|");
+	puts("\t|\t3.退出\t\t\t|");
+	puts("\t+-------------------------------+");
+	puts("\t\tmy_chat v1.2  ");
 }
 /********************************/
 
@@ -347,7 +352,8 @@ int login(int socket, int flag)
 int reg(int socket, int flag)
 {
 	MASG masg;
-	printf("************register************\n");
+	system("clear");
+	printf("---------------注册--------------\n");
 
 	masg.flag = flag;
 	//输入flag
@@ -364,7 +370,7 @@ int reg(int socket, int flag)
 	//发包
 	//传回信息，是否成功 //交给主接收函数
 
-	printf("**************************reg_end*\n");
+	printf("--------------------------------\n");
 }
 /*********************注册函数*****************/
 
@@ -532,6 +538,7 @@ void per(MASG *masg, int socket)
 	int status = 0;
 	while (1)
 	{
+		//system("clear");
 		meun_per();
 		masg->flag = DIS_MES_ON; //提示个人未读消息
 		send(socket, masg, sizeof(MASG), 0);
@@ -586,7 +593,8 @@ int login(int socket, int flag)
 	while(1)
 {
 	
-		printf("**************login**********\n");
+	system("clear");
+		printf("-----------登录----------\n");
 		masg.flag = flag;
 		//输入flag
 		printf("请输入用户名：");
@@ -604,7 +612,7 @@ int login(int socket, int flag)
 		if(masg.flag == LOG_FAU)
 		{
 
-		printf("登录失败！\n");
+		printf("账号不存在或密码错误！\n");
 		continue;
 		}
 		if(masg.flag == LOG_SUC)

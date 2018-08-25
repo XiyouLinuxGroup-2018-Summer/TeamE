@@ -795,15 +795,15 @@ int main()
 				int count = 0;
 			    //MASG*buf=NULL; 
 				//buf = &masg;
-				//do
-				//{
+				do
+				{
 					
 					count=recv(socket_c, &masg+count, sizeof(MASG)-count,MSG_WAITALL) ;
 					//if(count = 0)
 					//continue;
 				//	printf("count = %d\n",count);
 				//	printf("flaggg=%d\n",masg.flag);
-				//} while(count!=sizeof(MASG)&&count!=0);
+				} while(count!=sizeof(MASG)&&count!=0);
 				printf("count = %d\n",count);
 				count = 0;
 				printf("当前操作socket_c = %d\n", socket_c);
