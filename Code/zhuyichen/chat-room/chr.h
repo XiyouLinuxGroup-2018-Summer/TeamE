@@ -13,12 +13,12 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/event.h>
+#include <kqueue/sys/event.h>
 #include <sys/time.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <netdb.h>
-#include "/usr/local/mysql/include/mysql.h"
+#include "/usr/include/mysql/mysql.h"
 
 #define LQMAX       32
 #define SERVPORT    4507
